@@ -2,6 +2,7 @@
 
 ## 简介
 通过调用彩云天气的api, 结合echarts, 可视化天气数据。
+通过高德地图api获取用户当前位置的天气数据。
 
 ## 项目结构
 ```
@@ -44,6 +45,27 @@ npm config set registry http://registry.npm.taobao.org
 ```
 
 ## 接口文档
+1. 彩云天气api：
 ```
 https://docs.caiyunapp.com/weather-api/
+```
+2. 高德地图api：
+```
+https://lbs.amap.com/api/webservice/guide/api/georegeo
+```
+
+
+
+## Elememt Plus
+使用Element Plus作为UI组件库，可以快速搭建页面。
+1. 安装依赖包：
+```
+npm install element-plus --save
+```
+2. 在main.js中引入Element Plus：
+```
+import ElementPlus from 'element-plus'
+import 'element-plus/dist/index.css'
+
+createApp(App).use(ElementPlus).mount('#app')
 ```

@@ -3,17 +3,38 @@
     <div v-if="error" class="error">{{ error }}</div>
     <div v-if="!error && weatherData">
       <div class="location">
-        <h2>佛山南海天气预报</h2>
+        <h2>{{ formatted_address }}天气预报 <el-button @click="handleSearch" type="primary" :icon="Edit"
+            circle /></h2>
         <p>{{ weatherData.result.hourly.description }}</p>
       </div>
-      <div class="summaries">
+      <div class="summaries" v-if="summaries.length">
         <h3>天气概况</h3>
         <div v-for="(summary, index) in summaries" :key="index" class="summary">{{ summary || '-' }}</div>
       </div>
       <div v-for="(option, index) in chartOptions" :key="index" ref="charts" class="chart"></div>
     </div>
   </div>
+
+  <el-dialog v-model="dialogFormVisible" title="地点" width="500">
+    <el-form :model="form">
+      <el-form-item label="地点" :label-width="formLabelWidth">
+        <el-input v-model="form.name" autocomplete="off" />
+      </el-form-item>
+    </el-form>
+    <template #footer>
+      <div class="dialog-footer">
+        <el-button @click="dialogFormVisible = false">取消</el-button>
+        <el-button type="primary" @click="fetchLocationData">
+          确认
+        </el-button>
+      </div>
+    </template>
+  </el-dialog>
 </template>
+
+<script setup>
+import { Edit } from '@element-plus/icons-vue'
+</script>
 
 <script>
 import * as echarts from 'echarts';
@@ -22,10 +43,17 @@ import dayjs from 'dayjs';
 export default {
   data() {
     return {
+      myLocation: '',
+      formatted_address: '佛山南海',
       weatherData: null,
       error: null,
       chartOptions: [],
       summaries: [],
+      form: {
+        name: '',
+      },
+      dialogFormVisible: false,
+      formLabelWidth: '120px',
     };
   },
   mounted() {
@@ -39,7 +67,7 @@ export default {
   },
   methods: {
     fetchWeatherData() {
-      fetch('http://localhost:3000/proxy')
+      fetch('http://localhost:3000/proxy?myLocation=' + this.myLocation)
         .then(response => {
           if (response.status === 429) {
             this.error = '请求过多，请稍后再试。';
@@ -205,7 +233,7 @@ export default {
       const lowTemp = Math.min(...temperatures);
       const highTempTime = timeData[temperatures.indexOf(highTemp)];
       const lowTempTime = timeData[temperatures.indexOf(lowTemp)];
-      
+
       if (highTemp > 30) {
         this.summaries.push(`高温预警：气温最高达到 ${highTemp}°C，出现在 ${highTempTime}点。`);
       }
@@ -223,10 +251,19 @@ export default {
 
       this.$nextTick(() => {
         this.chartOptions.forEach((option, index) => {
-          const chartInstance = echarts.init(this.$refs.charts[index]);
+          // 检查并销毁已有图表实例
+          const chartDom = this.$refs.charts[index];
+          let existingChart = echarts.getInstanceByDom(chartDom);
+          if (existingChart) {
+            existingChart.dispose(); // 销毁已有图表实例
+          }
+
+          // 初始化新图表
+          const chartInstance = echarts.init(chartDom);
           chartInstance.setOption(option);
         });
       });
+
     },
     resizeCharts() {
       this.chartOptions.forEach((_, index) => {
@@ -236,6 +273,35 @@ export default {
         }
       });
     },
+    handleSearch() {
+      this.dialogFormVisible = true;
+      this.form.name = '';
+    },
+    fetchLocationData() {
+      this.error = null;
+      this.dialogFormVisible = false;
+      // 传入地点名称
+      fetch('http://localhost:3000/location?location=' + this.form.name)
+        .then(response => {
+          if (response.status === 429) {
+            this.error = '请求过多，请稍后再试。';
+            return;
+          }
+          if (!response.ok) {
+            throw new Error(`HTTP错误！状态：${response.status}`);
+          }
+          return response.json();
+        })
+        .then(data => {
+          console.log(data);
+          this.myLocation = data.location;
+          this.formatted_address = data.formatted_address;
+          this.fetchWeatherData();
+        })
+        .catch(error => {
+          this.error = '获取数据错误：' + error.message;
+        });
+    }
   },
 };
 </script>
@@ -280,13 +346,15 @@ export default {
 .summary {
   margin: 10px 0;
   font-weight: bold;
-  color: #d9534f; /* A color for warnings */
+  color: #d9534f;
+  /* A color for warnings */
   cursor: pointer;
   transition: background-color 0.2s;
 }
 
 .summary:hover {
-  background-color: #f0f0f0; /* Light gray on hover */
+  background-color: #f0f0f0;
+  /* Light gray on hover */
 }
 
 .error {
