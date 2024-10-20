@@ -3,12 +3,83 @@
     <div v-if="error" class="error">{{ error }}</div>
     <div v-if="!error && weatherData">
       <div class="location">
-        <h2>{{ formatted_address }}天气预报 <el-button @click="handleSearch" type="primary" :icon="Edit"
-            circle /></h2>
+        <h2>{{ formatted_address }}天气预报 <el-button @click="handleSearch" type="primary" :icon="Edit" circle /></h2>
         <p>{{ weatherData.result.hourly.description }}</p>
       </div>
+      <div class="summaries">
+        <el-card class="weather-summary" shadow="hover">
+          <h3 class="title">天气概况 - {{ dayjs(weatherData.result.hourly.cloudrate[0].datetime).format('HH') }}时</h3>
+          <el-divider></el-divider>
+          <el-row>
+            <el-col :span="12">
+              <div class="summary-item">
+                <el-icon><SuitcaseLine /></el-icon>
+                <div><strong>云量：</strong> {{ weatherData.result.hourly.cloudrate[0].value }}</div>
+              </div>
+              <div class="summary-item">
+                <el-icon><MagicStick /></el-icon>
+                <div><strong>降水量：</strong> {{ weatherData.result.hourly.precipitation[0].value }} mm</div>
+              </div>
+              <div class="summary-item">
+                <el-icon><Basketball /></el-icon>
+                <div><strong>降水概率：</strong> {{ weatherData.result.hourly.precipitation[0].probability }}%</div>
+              </div>
+              <div class="summary-item">
+                <el-icon><ShoppingTrolley /></el-icon>
+                <div><strong>体感温度：</strong> {{ weatherData.result.hourly.apparent_temperature[0].value }} °C</div>
+              </div>
+              <div class="summary-item">
+                <el-icon><Sunny /></el-icon>
+                <div><strong>地表 2 米气温：</strong> {{ weatherData.result.hourly.temperature[0].value }} °C</div>
+              </div>
+            </el-col>
+            <el-col :span="12">
+              <div class="summary-item">
+                <el-icon><Apple /></el-icon>
+                <div><strong>地面气压：</strong> {{ (weatherData.result.hourly.pressure[0].value / 100).toFixed(2) }} hPa
+                </div>
+              </div>
+              <div class="summary-item">
+                <el-icon><Sugar /></el-icon>
+                <div><strong>相对湿度：</strong> {{ (weatherData.result.hourly.humidity[0].value * 100).toFixed(2) }}%</div>
+              </div>
+              <div class="summary-item">
+                <el-icon><VideoCameraFilled /></el-icon>
+                <div><strong>风速：</strong> {{ weatherData.result.hourly.wind[0].speed }} m/s</div>
+              </div>
+              <div class="summary-item">
+                <el-icon><List /></el-icon>
+                <div><strong>风向：</strong> {{ weatherData.result.hourly.wind[0].direction }}°</div>
+              </div>
+              <div class="summary-item">
+                <el-icon><TrendCharts /></el-icon>
+                <div><strong>PM2.5：</strong> {{ weatherData.result.hourly.air_quality.pm25[0].value }} μg/m³</div>
+              </div>
+            </el-col>
+          </el-row>
+          <el-divider></el-divider>
+          <el-row>
+            <el-col :span="12">
+              <div class="summary-item">
+                <el-icon><Promotion /></el-icon>
+                <div><strong>能见度：</strong> {{ weatherData.result.hourly.visibility[0].value }} km</div>
+              </div>
+              <div class="summary-item">
+                <el-icon><HomeFilled /></el-icon>
+                <div><strong>AQI (国标)：</strong> {{ weatherData.result.hourly.air_quality.aqi[0].value.chn }}</div>
+              </div>
+            </el-col>
+            <el-col :span="12">
+              <div class="summary-item">
+                <el-icon><Headset /></el-icon>
+                <div><strong>向下短波辐射通量：</strong> {{ weatherData.result.hourly.dswrf[0].value }} W/m²</div>
+              </div>
+            </el-col>
+          </el-row>
+        </el-card>
+      </div>
       <div class="summaries" v-if="summaries.length">
-        <h3>天气概况</h3>
+        <h3>温馨提示</h3>
         <div v-for="(summary, index) in summaries" :key="index" class="summary">{{ summary || '-' }}</div>
       </div>
       <div v-for="(option, index) in chartOptions" :key="index" ref="charts" class="chart"></div>
@@ -33,7 +104,7 @@
 </template>
 
 <script setup>
-import { Edit } from '@element-plus/icons-vue'
+import { Edit, SuitcaseLine, MagicStick, Basketball, ShoppingTrolley, Sunny, Apple, Sugar, VideoCameraFilled, List, TrendCharts, Promotion, HomeFilled, Headset } from '@element-plus/icons-vue';
 </script>
 
 <script>
@@ -87,7 +158,7 @@ export default {
         });
     },
     initCharts() {
-      const timeData = this.weatherData.result.hourly.temperature.map(item => dayjs(item.datetime).format('HH'));
+      const timeData = this.weatherData.result.hourly.temperature.map(item => dayjs(item.datetime).format('HH') + '时');
 
       this.chartOptions = [
         {
@@ -352,8 +423,20 @@ export default {
   transition: background-color 0.2s;
 }
 
+.title {
+  font-size: 20px;
+  margin-bottom: 10px;
+}
+
+.summary-item {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+
 .summary:hover {
-  background-color: #f0f0f0;
+  background-color: #5246f3;
   /* Light gray on hover */
 }
 
